@@ -1,34 +1,21 @@
-"""
-Optimized for high-speed print spooling of standard text documents and exam notes.
-Implements aggressive DPI reduction and single-channel grayscale rasterization.
-"""
-
 import argparse
 import logging
 import sys
 import time
 from pathlib import Path
-import fitz  # PyMuPDF
+import fitz   
 
 
 class DocumentSpoolOptimizer:
-    """
-    Handles the aggressive rasterization and compression of PDF documents.
-    """
-
+  
     def __init__(self, dpi: int = 100):
-        """
-        Initializes the optimizer with specified output parameters.
-
-        Args:
-            dpi (int): The resolution for rasterization. Default is 100 for basic text notes.
-        """
+       
         self.dpi = dpi
         self.logger = self._setup_logger()
 
     @staticmethod
     def _setup_logger() -> logging.Logger:
-        """Configures the module logger."""
+       
         logger = logging.getLogger(__name__)
         if not logger.handlers:
             logger.setLevel(logging.INFO)
@@ -41,9 +28,7 @@ class DocumentSpoolOptimizer:
         return logger
 
     def process_document(self, input_path: Path, output_path: Path) -> bool:
-        """
-        Flattens and compresses the input PDF document into grayscale.
-        """
+         
         if not input_path.exists():
             self.logger.error("Input file does not exist: %s", input_path)
             return False
@@ -60,6 +45,8 @@ class DocumentSpoolOptimizer:
 
             for page_num in range(total_pages):
                 page = src_doc.load_page(page_num)
+                
+                
                 pix = page.get_pixmap(dpi=self.dpi, alpha=False, colorspace=fitz.csGRAY)
  
                 img_bytes = pix.tobytes("jpeg")
@@ -70,7 +57,7 @@ class DocumentSpoolOptimizer:
                 if (page_num + 1) % 10 == 0:
                     self.logger.info("Processed %d/%d pages...", page_num + 1, total_pages)
 
-            # Apply Level-4 garbage collection and deflation
+          
             out_doc.save(
                 output_path,
                 garbage=4,
@@ -95,7 +82,7 @@ class DocumentSpoolOptimizer:
             return False
 
     def _log_compression_ratio(self, original: Path, optimized: Path) -> None:
-        """Calculates and logs the file size changes."""
+        
         orig_size_mb = original.stat().st_size / (1024 * 1024)
         opt_size_mb = optimized.stat().st_size / (1024 * 1024)
         
@@ -108,7 +95,7 @@ class DocumentSpoolOptimizer:
 
 
 def main() -> None:
-    """CLI entry point."""
+     
     parser = argparse.ArgumentParser(
         description="Flatten and compress PDF notes to optimize print spooling."
     )
