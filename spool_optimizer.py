@@ -110,7 +110,7 @@ def main() -> None:
     
     if not success:
         sys.exit(1)
-
+# Main func
 
 if __name__ == "__main__":
     main()
