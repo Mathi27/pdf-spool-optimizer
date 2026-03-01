@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>PDF Flattener</h1>
+<p class="subtitle">Upload a PDF to flatten and compress for optimized printing.</p>
+
+<div id="error-msg" class="message message-error hidden"></div>
+<div id="success-msg" class="message message-success hidden"></div>
+
+<form id="upload-form">
+    <div class="form-group">
+        <label for="dropzone">PDF File</label>
+        <div id="dropzone" class="dropzone">
+            <input type="file" id="file-input" name="file" accept=".pdf" class="file-input">
+            <div class="dropzone-content">
+                <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span class="dropzone-text">Drop your PDF here or click to browse</span>
+                <span id="file-name" class="dropzone-filename"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="dpi">DPI (72–300)</label>
+        <input type="number" id="dpi" name="dpi" value="100" min="72" max="300" step="1">
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" id="submit-btn" class="btn btn-primary" disabled>
+            <span id="btn-text">Flatten PDF</span>
+            <span id="btn-spinner" class="spinner hidden"></span>
+        </button>
+    </div>
+</form>
+
+<div id="download-section" class="download-section hidden">
+    <div class="download-card">
+        <svg class="download-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <polyline points="9 15 12 18 15 15"/>
+        </svg>
+        <p class="download-text">Your flattened PDF is ready</p>
+        <a id="download-btn" href="#" class="btn btn-primary" download>Download PDF</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+    .dropzone {
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+    }
+    .dropzone:hover, .dropzone.dragover {
+        border-color: var(--accent);
+        background: rgba(37, 99, 235, 0.04);
+    }
+    .file-input {
+        position: absolute;
+        width: 0;
+        height: 0;
+        opacity: 0;
+    }
+    .dropzone-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .dropzone-icon {
+        color: var(--text-muted);
+    }
+    .dropzone-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+    .dropzone-filename {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--accent);
+    }
+    .form-actions {
+        margin-top: 1.5rem;
+    }
+    .download-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+    }
+    .download-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: var(--bg);
+        border-radius: 8px;
+    }
+    .download-icon {
+        color: var(--success);
+    }
+    .download-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+    .spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const fileName = document.getElementById('file-name');
+    const form = document.getElementById('upload-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const errorMsg = document.getElementById('error-msg');
+    const successMsg = document.getElementById('success-msg');
+    const downloadSection = document.getElementById('download-section');
+    const downloadBtn = document.getElementById('download-btn');
+
+    function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.classList.remove('hidden');
+        successMsg.classList.add('hidden');
+    }
+    function showSuccess(msg) {
+        successMsg.textContent = msg;
+        successMsg.classList.remove('hidden');
+        errorMsg.classList.add('hidden');
+    }
+    function hideMessages() {
+        errorMsg.classList.add('hidden');
+        successMsg.classList.add('hidden');
+    }
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) fileInput.files = e.dataTransfer.files;
+        updateFileName();
+    });
+    fileInput.addEventListener('change', updateFileName);
+
+    function updateFileName() {
+        if (fileInput.files.length) {
+            fileName.textContent = fileInput.files[0].name;
+            submitBtn.disabled = false;
+        } else {
+            fileName.textContent = '';
+            submitBtn.disabled = true;
+        }
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideMessages();
+        downloadSection.classList.add('hidden');
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('dpi', document.getElementById('dpi').value);
+
+        submitBtn.disabled = true;
+        btnText.classList.add('hidden');
+        btnSpinner.classList.remove('hidden');
+
+        try {
+            const res = await fetch('/api/process', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Processing failed');
+            }
+
+            showSuccess('PDF flattened successfully.');
+            downloadBtn.href = '/api/download/' + data.download_id;
+            downloadBtn.download = (data.original_name || 'flattened').replace(/\.pdf$/i, '_flattened.pdf');
+            downloadSection.classList.remove('hidden');
+        } catch (err) {
+            showError(err.message);
+        } finally {
+            submitBtn.disabled = false;
+            btnText.classList.remove('hidden');
+            btnSpinner.classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}

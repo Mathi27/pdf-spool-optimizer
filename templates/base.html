@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PDF Flattener{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #fafafa;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #111827;
+            --text-muted: #6b7280;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --success: #059669;
+            --error: #dc2626;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        main {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        .subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            font-family: inherit;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s, opacity 0.15s;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            font-size: 0.875rem;
+            font-family: inherit;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .message {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        .message-error {
+            background: #fef2f2;
+            color: var(--error);
+        }
+        .message-success {
+            background: #f0fdf4;
+            color: var(--success);
+        }
+        .hidden { display: none !important; }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

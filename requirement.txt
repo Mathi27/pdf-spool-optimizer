@@ -1,2 +1,4 @@
 PyMuPDF
 Pillow
+Flask
+Werkzeug
