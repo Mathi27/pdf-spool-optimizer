@@ -1,0 +1,14 @@
+services:
+  pdf-optimizer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pdf-spool-optimizer:latest
+    container_name: pdf-spool-optimizer
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+    # Increase shared memory for PyMuPDF rendering large documents
+    shm_size: "256mb"
+    restart: unless-stopped

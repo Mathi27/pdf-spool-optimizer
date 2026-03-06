@@ -75,4 +75,40 @@ When you are finished using the tool, you can exit the virtual environment by ru
 deactivate
 ```
 
+---
+
+## 🐳 Docker Deployment
+
+Run the app in a fully isolated container — no Python or venv setup required.
+
+### Quick start with Docker Compose (recommended)
+```bash
+docker compose up --build
+```
+The web UI will be available at **http://localhost:5000**.
+
+### Build and run manually
+```bash
+# Build the image
+docker build -t pdf-spool-optimizer .
+
+# Run the container
+docker run -p 5000:5000 pdf-spool-optimizer
+```
+
+### Stop the container
+```bash
+docker compose down
+```
+
+### Runtime environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `FLASK_ENV` | `production` | Set to `development` to enable debug mode |
+| `FLASK_HOST` | `127.0.0.1` | Bind address (use `0.0.0.0` in containers) |
+| `FLASK_PORT` | `5000` | Port the dev server listens on |
+
+---
+
 **Author:** Mathi Yuvarajan T.K
