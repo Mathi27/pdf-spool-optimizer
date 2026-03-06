@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PDF Flattener{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/></svg>" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -112,18 +113,26 @@
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
         .message {
-            padding: 0.75rem 1rem;
+            padding: 1rem;
             border-radius: 8px;
             font-size: 0.875rem;
-            margin-bottom: 1rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
         .message-error {
-            background: #fef2f2;
-            color: var(--error);
+            background: #fee2e2;
+            color: #b91c1c;
+            border-left: 4px solid #ef4444;
         }
         .message-success {
-            background: #f0fdf4;
-            color: var(--success);
+            background: #d1fae5;
+            color: #047857;
+            border-left: 4px solid #10b981;
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
         }
         .hidden { display: none !important; }
     </style>

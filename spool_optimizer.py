@@ -7,15 +7,26 @@ import fitz
 
 
 class DocumentSpoolOptimizer:
-  
+    """Flattens and compresses PDF documents by rasterizing each page to grayscale JPEG
+    images, reducing processing load on printer hardware and preventing memory overflow."""
+
     def __init__(self, dpi: int = 100):
-       
+        """Initialize the optimizer with a target rasterization DPI.
+
+        Args:
+            dpi: Dots per inch for rasterization. Must be between 72 and 300.
+                 Lower values produce smaller files; higher values retain more detail.
+        """
         self.dpi = dpi
         self.logger = self._setup_logger()
 
     @staticmethod
     def _setup_logger() -> logging.Logger:
-       
+        """Create and configure a stdout logger for this module.
+
+        Returns:
+            A configured Logger instance.
+        """
         logger = logging.getLogger(__name__)
         if not logger.handlers:
             logger.setLevel(logging.INFO)
@@ -28,7 +39,18 @@ class DocumentSpoolOptimizer:
         return logger
 
     def process_document(self, input_path: Path, output_path: Path) -> bool:
-         
+        """Flatten and compress a PDF document.
+
+        Each page is rasterized to a grayscale JPEG at the configured DPI and
+        reassembled into a new PDF with maximum compression.
+
+        Args:
+            input_path: Path to the source PDF file.
+            output_path: Destination path for the optimized PDF.
+
+        Returns:
+            True on success, False if the input file is missing or any error occurs.
+        """
         if not input_path.exists():
             self.logger.error("Input file does not exist: %s", input_path)
             return False
@@ -82,7 +104,12 @@ class DocumentSpoolOptimizer:
             return False
 
     def _log_compression_ratio(self, original: Path, optimized: Path) -> None:
-        
+        """Log the size comparison between the original and optimized PDF files.
+
+        Args:
+            original: Path to the original input PDF.
+            optimized: Path to the newly written output PDF.
+        """
         orig_size_mb = original.stat().st_size / (1024 * 1024)
         opt_size_mb = optimized.stat().st_size / (1024 * 1024)
         
@@ -95,7 +122,7 @@ class DocumentSpoolOptimizer:
 
 
 def main() -> None:
-     
+    """CLI entry point: parse arguments and run the document optimizer."""
     parser = argparse.ArgumentParser(
         description="Flatten and compress PDF notes to optimize print spooling."
     )
@@ -105,12 +132,19 @@ def main() -> None:
     
     args = parser.parse_args()
 
+    if not args.input.exists():
+        print(f"Error: Input file not found: {args.input}", file=sys.stderr)
+        sys.exit(1)
+
+    if args.dpi < 72 or args.dpi > 300:
+        print(f"Error: DPI must be between 72 and 300, got {args.dpi}", file=sys.stderr)
+        sys.exit(1)
+
     optimizer = DocumentSpoolOptimizer(dpi=args.dpi)
     success = optimizer.process_document(args.input, args.output)
-    
+
     if not success:
         sys.exit(1)
-# Main func
 
 if __name__ == "__main__":
     main()

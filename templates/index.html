@@ -265,17 +265,6 @@
         color: var(--text-muted, #64748b);
     }
 
-    /* Message Alerts */
-    .message {
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
-        font-weight: 500;
-        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-    .message-error { background: #fee2e2; color: #b91c1c; border-left: 4px solid #ef4444; }
-    .message-success { background: #d1fae5; color: #047857; border-left: 4px solid #10b981; }
-
     /* Spinner */
     .spinner {
         width: 20px;
@@ -292,11 +281,6 @@
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes popIn {
-        0% { opacity: 0; transform: scale(0.95); }
-        100% { opacity: 1; transform: scale(1); }
-    }
-    .hidden { display: none !important; }
 
     /* Responsive adjustments */
     @media (max-width: 600px) {
