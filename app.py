@@ -41,6 +41,13 @@ def process_pdf():
     dpi = request.form.get("dpi", 100, type=int)
     dpi = max(72, min(300, dpi))
 
+    workers = request.form.get("workers", 0, type=int)
+    workers = max(0, workers)
+    # In a web-server context cap unconstrained (0) requests to half the
+    # available cores so concurrent uploads don't saturate the machine.
+    if workers == 0:
+        workers = max(1, (os.cpu_count() or 2) // 2)
+
     job_id = str(uuid.uuid4())
     input_path = Path(app.config["UPLOAD_FOLDER"]) / f"{job_id}_input.pdf"
     output_path = Path(app.config["UPLOAD_FOLDER"]) / f"{job_id}_output.pdf"
@@ -48,7 +55,7 @@ def process_pdf():
     try:
         file.save(input_path)
 
-        optimizer = DocumentSpoolOptimizer(dpi=dpi)
+        optimizer = DocumentSpoolOptimizer(dpi=dpi, workers=workers)
         success = optimizer.process_document(input_path, output_path)
 
         input_path.unlink(missing_ok=True)

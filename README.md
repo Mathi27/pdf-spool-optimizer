@@ -69,6 +69,20 @@ pip install -r requirements.txt
 python spool_optimizer.py -i input_file_name.pdf -o output_file_name.pdf
 ```
 
+### CLI Options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-i` / `--input` | *(required)* | Path to the input PDF file |
+| `-o` / `--output` | *(required)* | Path for the output PDF file |
+| `--dpi` | `100` | Rasterization resolution (72–300) |
+| `--workers` | `0` | Worker processes for parallel rendering. `0` = all CPU cores. `1` = sequential (no multiprocessing) |
+
+**Example — use 4 workers for a large PDF:**
+```
+python spool_optimizer.py -i large_doc.pdf -o output.pdf --dpi 150 --workers 4
+```
+
 ### Deactivation
 When you are finished using the tool, you can exit the virtual environment by running:
 ```

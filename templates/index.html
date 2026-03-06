@@ -34,6 +34,12 @@
             <input type="number" id="dpi" name="dpi" value="100" min="72" max="300" step="1" class="modern-input">
         </div>
 
+        <div class="form-group">
+            <label for="workers" class="form-label">Worker Processes (0 = all CPU cores)</label>
+            <input type="number" id="workers" name="workers" value="0" min="0" step="1" class="modern-input">
+            <span class="field-hint">Use more workers to speed up large multi-page PDFs.</span>
+        </div>
+
         <div class="form-actions">
             <button type="submit" id="submit-btn" class="btn btn-primary submit-btn" disabled>
                 <span id="btn-text">Flatten PDF</span>
@@ -265,6 +271,14 @@
         color: var(--text-muted, #64748b);
     }
 
+    /* Field hint */
+    .field-hint {
+        display: block;
+        margin-top: 0.4rem;
+        font-size: 0.8rem;
+        color: var(--text-muted, #64748b);
+    }
+
     /* Spinner */
     .spinner {
         width: 20px;
@@ -361,6 +375,7 @@
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
         formData.append('dpi', document.getElementById('dpi').value);
+        formData.append('workers', document.getElementById('workers').value);
 
         // UI Loading State
         submitBtn.disabled = true;
