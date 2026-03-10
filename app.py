@@ -55,17 +55,21 @@ def process_pdf():
 
         if not success:
             output_path.unlink(missing_ok=True)
-            return jsonify({"error": "Failed to process PDF"}), 500
+            return jsonify({"error": "Failed to process PDF. The file may be corrupted, password-protected, or invalid."}), 422
 
         return jsonify({
             "success": True,
             "download_id": job_id,
             "original_name": secure_filename(file.filename),
         })
+    except MemoryError:
+        input_path.unlink(missing_ok=True)
+        output_path.unlink(missing_ok=True)
+        return jsonify({"error": "File is too large to process. Insufficient memory."}), 413
     except Exception as e:
         input_path.unlink(missing_ok=True)
         output_path.unlink(missing_ok=True)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
 
 @app.route("/api/download/<job_id>")
