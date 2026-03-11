@@ -91,48 +91,69 @@ class DocumentSpoolOptimizer:
             return False
 
         start_time = time.time()
+        self.logger.info("Starting optimization for: %s at %d DPI (Grayscale)", input_path.name, self.dpi)
 
         try:
-            # Read page dimensions from the source doc in the main process
+            # Attempt to open the PDF and perform validation checks
             src_doc = fitz.open(input_path)
+            
+            # Check if the PDF is encrypted/password-protected
+            if src_doc.is_encrypted:
+                self.logger.error("PDF is password-protected: %s", input_path.name)
+                src_doc.close()
+                return False
+            
+            # Check if the PDF has pages (detect corrupted/empty files)
             total_pages = len(src_doc)
+            if total_pages == 0:
+                self.logger.error("PDF has no pages or is corrupted: %s", input_path.name)
+                src_doc.close()
+                return False
+            
+            self.logger.info("Total pages to process: %d", total_pages)
+            
+            # Validate that at least the first page can be loaded and rendered
+            try:
+                first_page = src_doc.load_page(0)
+                first_page.get_pixmap(dpi=self.dpi, alpha=False, colorspace=fitz.csGRAY)
+                self.logger.info("Validation passed: First page rendered successfully")
+            except Exception as e:
+                self.logger.error("Content stream corruption - cannot render pages: %s - %s", input_path.name, str(e))
+                src_doc.close()
+                return False
+            
             src_doc.close()
-
-            effective_workers = min(self.workers, total_pages)
-            self.logger.info(
-                "Starting optimization: %s | %d pages | %d DPI | %d worker(s)",
-                input_path.name, total_pages, self.dpi, effective_workers,
-            )
-
-            # Build task args — each worker receives the path string (picklable)
-            tasks = [(str(input_path), page_num, self.dpi) for page_num in range(total_pages)]
-
-            # Render pages in parallel; collect into a dict keyed by page_num
-            rendered: dict[int, Tuple[bytes, float, float]] = {}
-
-            if effective_workers == 1:
-                # Sequential fallback — avoids process-spawn overhead for small PDFs
-                for task in tasks:
-                    page_num, img_bytes, w, h = _render_page(task)
-                    rendered[page_num] = (img_bytes, w, h)
+            
+            # Use multiprocessing for parallel page rendering
+            pdf_path_str = str(input_path.absolute())
+            tasks = [(pdf_path_str, page_num, self.dpi) for page_num in range(total_pages)]
+            
+            rendered_pages = {}
+            
+            if self.workers == 1:
+                # Sequential processing
+                for page_num in range(total_pages):
+                    page_num_result, img_bytes, width, height = _render_page((pdf_path_str, page_num, self.dpi))
+                    rendered_pages[page_num_result] = (img_bytes, width, height)
                     if (page_num + 1) % 10 == 0:
                         self.logger.info("Processed %d/%d pages...", page_num + 1, total_pages)
             else:
-                with ProcessPoolExecutor(max_workers=effective_workers) as executor:
+                # Parallel processing
+                with ProcessPoolExecutor(max_workers=self.workers) as executor:
                     futures = {executor.submit(_render_page, task): task[1] for task in tasks}
-                    completed = 0
+                    
                     for future in as_completed(futures):
-                        page_num, img_bytes, w, h = future.result()
-                        rendered[page_num] = (img_bytes, w, h)
-                        completed += 1
-                        if completed % 10 == 0:
-                            self.logger.info("Rendered %d/%d pages...", completed, total_pages)
-
-            # Assemble output PDF in correct page order (must be single-threaded)
+                        page_num, img_bytes, width, height = future.result()
+                        rendered_pages[page_num] = (img_bytes, width, height)
+                        
+                        if len(rendered_pages) % 10 == 0:
+                            self.logger.info("Processed %d/%d pages...", len(rendered_pages), total_pages)
+            
+            # Assemble rendered pages into output PDF
             out_doc = fitz.open()
             for page_num in range(total_pages):
-                img_bytes, w, h = rendered[page_num]
-                out_page = out_doc.new_page(width=w, height=h)
+                img_bytes, width, height = rendered_pages[page_num]
+                out_page = out_doc.new_page(width=width, height=height)
                 out_page.insert_image(out_page.rect, stream=img_bytes)
 
             out_doc.save(output_path, garbage=4, deflate=True, clean=True)
@@ -146,8 +167,34 @@ class DocumentSpoolOptimizer:
             self._log_compression_ratio(input_path, output_path)
             return True
 
+        except fitz.FileDataError as e:
+            error_msg = str(e).lower()
+            if "xref" in error_msg or "cross-reference" in error_msg:
+                self.logger.error("Cross-reference table corruption in PDF: %s - %s", input_path.name, str(e))
+            elif "header" in error_msg or "pdf" in error_msg[:20]:
+                self.logger.error("Invalid PDF header or structure: %s - %s", input_path.name, str(e))
+            elif "compression" in error_msg or "flate" in error_msg or "deflate" in error_msg:
+                self.logger.error("Compression/decompression error in PDF: %s - %s", input_path.name, str(e))
+            else:
+                self.logger.error("Corrupted or invalid PDF file: %s - %s", input_path.name, str(e))
+            return False
+        except fitz.FileNotFoundError as e:
+            self.logger.error("PDF file not found: %s - %s", input_path.name, str(e))
+            return False
+        except RuntimeError as e:
+            error_msg = str(e).lower()
+            if "password" in error_msg or "encrypted" in error_msg:
+                self.logger.error("PDF is password-protected: %s", input_path.name)
+            elif "damaged" in error_msg or "corrupt" in error_msg:
+                self.logger.error("PDF file is corrupted: %s", input_path.name)
+            else:
+                self.logger.error("Runtime error processing PDF: %s - %s", input_path.name, str(e))
+            return False
+        except MemoryError:
+            self.logger.error("Insufficient memory to process PDF: %s", input_path.name)
+            return False
         except Exception as e:
-            self.logger.error("Failed to process document: %s", str(e), exc_info=True)
+            self.logger.error("Failed to process document: %s - %s", input_path.name, str(e), exc_info=True)
             return False
 
     def _log_compression_ratio(self, original: Path, optimized: Path) -> None:
